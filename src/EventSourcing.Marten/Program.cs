@@ -15,6 +15,8 @@ application.MapPost("orders/{orderId:guid}/dispatch", async (Guid orderId) => { 
 
 application.MapGet("orders/{orderId:guid}/out-for-delivery", async () => { await Task.CompletedTask; });
 
+application.MapGet("orders/{orderId:guid}/delivered", async () => { await Task.CompletedTask; });
+
 
 application.Run();
 
