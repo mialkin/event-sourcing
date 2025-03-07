@@ -8,9 +8,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F2D513D0-1865-4CAC-9BBC-1C4F9F6C6119}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Marten", "src\EventSourcing.Marten\EventSourcing.Marten.csproj", "{5CF1E34E-747E-4EC5-A8A6-3BE4D596E2FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5CF1E34E-747E-4EC5-A8A6-3BE4D596E2FB} = {F2D513D0-1865-4CAC-9BBC-1C4F9F6C6119}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5CF1E34E-747E-4EC5-A8A6-3BE4D596E2FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CF1E34E-747E-4EC5-A8A6-3BE4D596E2FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CF1E34E-747E-4EC5-A8A6-3BE4D596E2FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CF1E34E-747E-4EC5-A8A6-3BE4D596E2FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
