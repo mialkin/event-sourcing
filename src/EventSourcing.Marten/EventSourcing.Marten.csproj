@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Marten"/>
         <PackageReference Include="Serilog.AspNetCore"/>
     </ItemGroup>
 
