@@ -1,6 +1,19 @@
+using Marten;
 using Serilog;
+using Weasel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMarten(options =>
+{
+    options.Connection("Server=localhost;Port=5140;Database=marten; User ID=marten;Password=marten");
+    options.UseSystemTextJsonForSerialization();
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.AutoCreateSchemaObjects = AutoCreate.All;
+    }
+});
 
 builder.Host.UseSerilog(
     (context, configuration) =>

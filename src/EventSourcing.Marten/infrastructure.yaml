@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:17.4
+    container_name: event-sourcing-marten
+    environment:
+      POSTGRES_USER: marten
+      POSTGRES_PASSWORD: marten
+      POSTGRES_DBNAME: marten
+    ports:
+      - 5140:5432
