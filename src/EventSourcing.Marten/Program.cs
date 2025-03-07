@@ -1,3 +1,4 @@
+using EventSourcing.Marten;
 using Marten;
 using Serilog;
 using Weasel.Core;
@@ -24,11 +25,28 @@ builder.Host.UseSerilog(
 
 var application = builder.Build();
 
-application.MapGet("orders/{orderId:guid}", async (Guid orderId) => { await Task.CompletedTask; });
+application.MapGet("orders/{orderId:guid}", async (IQuerySession session, Guid orderId) =>
+{
+    var order = await session.Events.AggregateStreamAsync<Order>(orderId);
+    return order is not null ? Results.Ok(order) : Results.NotFound();
+});
 
 application.MapGet("orders", async () => { await Task.CompletedTask; });
 
-application.MapPost("orders", async (CreateOrderRequest request) => { await Task.CompletedTask; });
+application.MapPost(pattern: "orders", handler: async (IDocumentStore store, CreateOrderRequest request) =>
+{
+    var order = new Events.OrderCreated
+    {
+        ProductName = request.ProductName,
+        DeliveryAddress = request.DeliveryAddress
+    };
+
+    await using var session = store.LightweightSession();
+    session.Events.StartStream<Order>(id: order.Id, events: order);
+    await session.SaveChangesAsync();
+
+    return Results.Ok(order);
+});
 
 application.MapPost("orders/{orderId:guid}/address",
     async (Guid orderId, DeliveryAddressUpdateRequest request) => { await Task.CompletedTask; });
