@@ -1,5 +1,6 @@
 using EventSourcing.Marten;
 using Marten;
+using Marten.Events.Projections;
 using Serilog;
 using Weasel.Core;
 
@@ -9,6 +10,8 @@ builder.Services.AddMarten(options =>
 {
     options.Connection("Server=localhost;Port=5140;Database=marten; User ID=marten;Password=marten");
     options.UseSystemTextJsonForSerialization();
+
+    options.Projections.Add<OrderProjection>(ProjectionLifecycle.Inline);
 
     if (builder.Environment.IsDevelopment())
     {
@@ -27,11 +30,15 @@ var application = builder.Build();
 
 application.MapGet("orders/{orderId:guid}", async (IQuerySession session, Guid orderId) =>
 {
-    var order = await session.Events.AggregateStreamAsync<Order>(orderId);
+    var order = await session.LoadAsync<Order>(orderId);
     return order is not null ? Results.Ok(order) : Results.NotFound();
 });
 
-application.MapGet("orders", async () => { await Task.CompletedTask; });
+application.MapGet("orders", async (IQuerySession session) =>
+{
+    var orders = await session.Query<Order>().ToListAsync();
+    return Results.Ok(orders);
+});
 
 application.MapPost(pattern: "orders", handler: async (IDocumentStore store, CreateOrderRequest request) =>
 {
@@ -49,13 +56,61 @@ application.MapPost(pattern: "orders", handler: async (IDocumentStore store, Cre
 });
 
 application.MapPost("orders/{orderId:guid}/address",
-    async (Guid orderId, DeliveryAddressUpdateRequest request) => { await Task.CompletedTask; });
+    async (IDocumentStore store, Guid orderId, DeliveryAddressUpdateRequest request) =>
+    {
+        var addressUpdated = new Events.OrderAddressUpdated
+        {
+            Id = orderId,
+            DeliveryAddress = request.DeliveryAddress
+        };
 
-application.MapPost("orders/{orderId:guid}/dispatch", async (Guid orderId) => { await Task.CompletedTask; });
+        await using var session = store.LightweightSession();
+        session.Events.Append(orderId, addressUpdated);
+        await session.SaveChangesAsync();
+        return Results.Ok();
+    });
 
-application.MapGet("orders/{orderId:guid}/out-for-delivery", async () => { await Task.CompletedTask; });
+application.MapPost("orders/{orderId:guid}/dispatch", async (IDocumentStore store, Guid orderId) =>
+{
+    var orderDispatched = new Events.OrderDispatched
+    {
+        Id = orderId,
+        DispatchedAtUtc = DateTime.UtcNow
+    };
 
-application.MapGet("orders/{orderId:guid}/delivered", async () => { await Task.CompletedTask; });
+    await using var session = store.LightweightSession();
+    session.Events.Append(orderId, orderDispatched);
+    await session.SaveChangesAsync();
+    return Results.Ok();
+});
+
+application.MapGet("orders/{orderId:guid}/out-for-delivery", async (IDocumentStore store, Guid orderId) =>
+{
+    var orderOutForDelivery = new Events.OrderOutForDelivery
+    {
+        Id = orderId,
+        OutForDeliveryAtUtc = DateTime.UtcNow
+    };
+
+    await using var session = store.LightweightSession();
+    session.Events.Append(orderId, orderOutForDelivery);
+    await session.SaveChangesAsync();
+    return Results.Ok();
+});
+
+application.MapGet("orders/{orderId:guid}/delivered", async (IDocumentStore store, Guid orderId) =>
+{
+    var orderDelivered = new Events.OrderDelivered
+    {
+        Id = orderId,
+        DeliveredAtUtc = DateTime.UtcNow
+    };
+
+    await using var session = store.LightweightSession();
+    session.Events.Append(orderId, orderDelivered);
+    await session.SaveChangesAsync();
+    return Results.Ok();
+});
 
 
 application.Run();
